@@ -1,6 +1,7 @@
 import { useDispatch, useSelector } from 'react-redux'
 import { NavLink, Route, Routes } from 'react-router-dom'
 import BlueprintsPage from './pages/BlueprintsPage.jsx'
+import AppP4 from './AppP4.jsx'
 import BlueprintDetailPage from './pages/BlueprintDetailPage.jsx'
 import CreateBlueprintPage from './pages/CreateBlueprintPage.jsx'
 import LoginPage from './pages/LoginPage.jsx'
@@ -25,6 +26,7 @@ export default function App() {
           <NavLink to="/" end>
             Blueprints
           </NavLink>
+          <NavLink to="/p4">Tiempo real</NavLink>
           <NavLink to="/create">Crear Blueprint</NavLink>
           {isAuthenticated ? (
             <>
@@ -40,6 +42,7 @@ export default function App() {
       </header>
       <Routes>
         <Route path="/" element={<BlueprintsPage />} />
+        <Route path="/p4" element={<AppP4 />} />
         <Route path="/blueprints/:author/:name" element={<BlueprintDetailPage />} />
         <Route
           path="/create"

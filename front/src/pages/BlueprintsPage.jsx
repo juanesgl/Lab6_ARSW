@@ -22,6 +22,13 @@ import {
   selectUnsavedPoints,
 } from '../features/blueprints/selectors.js'
 import { selectIsAuthenticated } from '../features/auth/authSlice.js'
+import {
+  selectRealtimeStatus,
+  selectRealtimeTech,
+  techSelected,
+} from '../features/realtime/realtimeSlice.js'
+import { RT_TECHNOLOGIES } from '../features/realtime/realtimeClients.js'
+import useRealtime from '../hooks/useRealtime.js'
 import { USE_MOCK } from '../services/blueprintsService.js'
 import BlueprintCanvas from '../components/BlueprintCanvas.jsx'
 import BlueprintList from '../components/BlueprintList.jsx'
@@ -44,10 +51,17 @@ export default function BlueprintsPage() {
   const openReq = useSelector(selectRequest('fetchBlueprint'))
   const saveReq = useSelector(selectRequest('saveBlueprint'))
   const deleteReq = useSelector(selectRequest('deleteBlueprint'))
+  const rtTech = useSelector(selectRealtimeTech)
+  const rtStatus = useSelector(selectRealtimeStatus)
 
   const [authorInput, setAuthorInput] = useState(location.state?.author ?? selectedAuthor)
   const [lastOpened, setLastOpened] = useState(null)
   const [lastDeleted, setLastDeleted] = useState(null)
+
+  const { broadcast, enabled: rtEnabled } = useRealtime({
+    author: current?.author,
+    name: current?.name,
+  })
 
   // El backend real exige JWT incluso para GET /blueprints; el mock no
   const canListAuthors = USE_MOCK || isAuthenticated
@@ -238,7 +252,12 @@ export default function BlueprintsPage() {
         <BlueprintCanvas
           points={current?.points || []}
           onAddPoint={
-            current && isAuthenticated ? (p) => dispatch(addPointToCurrent(p)) : undefined
+            current && isAuthenticated
+              ? (p) => {
+                  dispatch(addPointToCurrent(p))
+                  broadcast(p)
+                }
+              : undefined
           }
         />
 
@@ -263,6 +282,37 @@ export default function BlueprintsPage() {
             <span className="muted">Haz click en el lienzo para agregar puntos.</span>
           </div>
         )}
+
+        <div className="card" style={{ marginTop: 16 }}>
+          <h3 style={{ marginTop: 0 }}>Tecnología de tiempo real</h3>
+          <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+            <label className="muted" htmlFor="rt-tech">
+              RT
+            </label>
+            <select
+              id="rt-tech"
+              className="input"
+              value={rtTech}
+              onChange={(e) => dispatch(techSelected(e.target.value))}
+            >
+              {RT_TECHNOLOGIES.map((t) => (
+                <option key={t.value} value={t.value}>
+                  {t.label}
+                </option>
+              ))}
+            </select>
+            <span className={`badge ${rtStatus === 'connected' ? 'ok' : 'warn'}`}>
+              {rtEnabled ? rtStatus : 'inactivo'}
+            </span>
+          </div>
+          <p className="muted" style={{ marginBottom: 0 }}>
+            {rtTech === 'none'
+              ? 'Sin tiempo real: los puntos solo se guardan en esta pestaña.'
+              : current
+                ? `Colaborando en el tópico blueprints.${current.author}.${current.name}`
+                : 'Abre un plano para empezar a colaborar.'}
+          </p>
+        </div>
         {current && !isAuthenticated && (
           <p className="muted">
             <Link to="/login" className="link">
