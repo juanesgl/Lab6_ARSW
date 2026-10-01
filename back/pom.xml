@@ -42,6 +42,12 @@
       <scope>runtime</scope>
     </dependency>
 
+    <!-- WebSocket / STOMP (Lab P4 - tiempo real) -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-websocket</artifactId>
+    </dependency>
+
     <!-- Resource Server with JWT validation -->
     <dependency>
       <groupId>org.springframework.boot</groupId>
