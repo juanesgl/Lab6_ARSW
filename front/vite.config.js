@@ -7,12 +7,12 @@ export default defineConfig(({ mode }) => {
     plugins: [react()],
     server: {
       port: 5173,
-      // El backend (Lab P2) no tiene CORS: en desarrollo las peticiones a /api se reenvían a él
+      // El backend (Lab P2) no tiene CORS: en desarrollo las peticiones a /api se reenvían a él.
+      // Sin rewrite: el backend ya expone /api/blueprints y quitar el prefijo daría 404.
       proxy: {
         '/api': {
           target: env.VITE_API_PROXY_TARGET || 'http://localhost:8080',
           changeOrigin: true,
-          rewrite: (path) => path.replace(/^\/api/, ''),
         },
       },
     },
