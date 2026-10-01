@@ -2,10 +2,9 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import { render, screen, fireEvent, within } from '@testing-library/react'
 import { Provider } from 'react-redux'
 import { MemoryRouter } from 'react-router-dom'
-import { combineReducers, configureStore } from '@reduxjs/toolkit'
+import { configureStore } from '@reduxjs/toolkit'
 import BlueprintsPage from '../src/pages/BlueprintsPage.jsx'
-import blueprintsReducer from '../src/features/blueprints/blueprintsSlice.js'
-import authReducer from '../src/features/auth/authSlice.js'
+import { rootReducer } from '../src/store/index.js'
 import apimock from '../src/services/apimock.js'
 
 // Store real (con el servicio mock) que además registra las acciones despachadas
@@ -16,7 +15,7 @@ function setup({ token = null } = {}) {
     return next(action)
   }
   const store = configureStore({
-    reducer: combineReducers({ blueprints: blueprintsReducer, auth: authReducer }),
+    reducer: rootReducer,
     preloadedState: { auth: { token, username: token && 'student', status: 'idle', error: null } },
     middleware: (gDM) => gDM().concat(recorder),
   })
