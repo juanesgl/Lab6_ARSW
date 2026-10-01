@@ -81,12 +81,28 @@ export const initialState = {
 
 const findIndex = (items = [], name) => items.findIndex((bp) => bp.name === name)
 
+const samePoint = (a, b) => a.x === b.x && a.y === b.y
+
+// El eco RT del propio punto vuelve por el tópico; sin este filtro se duplica en el trazo.
+const wasAlreadyDrawn = (points, point) => points.some((p) => samePoint(p, point))
+
 const slice = createSlice({
   name: 'blueprints',
   initialState,
   reducers: {
     addPointToCurrent(state, action) {
       if (state.current) state.current.points.push(action.payload)
+    },
+    addRemotePointToCurrent(state, action) {
+      const bp = state.current
+      if (!bp) return
+      const { author, name, point } = action.payload
+      if (bp.author !== author || bp.name !== name) return
+      if (wasAlreadyDrawn(bp.points, point)) return
+      bp.points.push(point)
+    },
+    remotePointsCleared(state) {
+      if (state.current) state.current.points.splice(state.savedPointsCount)
     },
     discardChanges(state) {
       if (state.current) state.current.points.splice(state.savedPointsCount)
@@ -178,5 +194,11 @@ const slice = createSlice({
   },
 })
 
-export const { addPointToCurrent, discardChanges, clearError } = slice.actions
+export const {
+  addPointToCurrent,
+  addRemotePointToCurrent,
+  remotePointsCleared,
+  discardChanges,
+  clearError,
+} = slice.actions
 export default slice.reducer
