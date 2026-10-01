@@ -16,11 +16,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 @RestController
-@RequestMapping("/blueprints")
+@RequestMapping("/api/blueprints")
 @Tag(name = "Blueprints", description = "API para la gestión y consulta de planos arquitectónicos")
 public class BlueprintsAPIController {
 
@@ -101,6 +102,42 @@ public class BlueprintsAPIController {
         try {
             services.addPoint(author, bpname, p.getX(), p.getY());
             return ResponseEntity.status(HttpStatus.ACCEPTED).build();
+        } catch (BlueprintNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    // PUT /api/blueprints/{author}/{bpname}
+    @Operation(summary = "Actualizar un plano completo",
+            description = "Reemplaza la lista de puntos del plano existente por la enviada en el cuerpo.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "Plano actualizado correctamente"),
+            @ApiResponse(responseCode = "404", description = "El plano solicitado no existe")
+    })
+    @PreAuthorize("hasAuthority('SCOPE_blueprints.write')")
+    @PutMapping("/{author}/{bpname}")
+    public ResponseEntity<?> update(@PathVariable String author, @PathVariable String bpname,
+                                    @Valid @RequestBody List<@Valid Point> points) {
+        try {
+            services.updateBlueprint(author, bpname, points);
+            return ResponseEntity.noContent().build();
+        } catch (BlueprintNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    // DELETE /api/blueprints/{author}/{bpname}
+    @Operation(summary = "Eliminar un plano", description = "Elimina de forma permanente el plano indicado.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "Plano eliminado correctamente"),
+            @ApiResponse(responseCode = "404", description = "El plano solicitado no existe")
+    })
+    @PreAuthorize("hasAuthority('SCOPE_blueprints.write')")
+    @DeleteMapping("/{author}/{bpname}")
+    public ResponseEntity<?> delete(@PathVariable String author, @PathVariable String bpname) {
+        try {
+            services.deleteBlueprint(author, bpname);
+            return ResponseEntity.noContent().build();
         } catch (BlueprintNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", e.getMessage()));
         }
