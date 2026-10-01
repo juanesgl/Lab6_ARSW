@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { createRealtimeClient } from '../features/realtime/realtimeClients.js'
+import { CLIENT_ID, createRealtimeClient } from '../features/realtime/realtimeClients.js'
 import {
   realtimeDisconnected,
   selectRealtimeTech,
@@ -19,10 +19,21 @@ export default function useRealtime({ author, name }) {
     if (!enabled) return undefined
 
     const room = { author, name }
+    // Un cliente ya descartado sigue notificando su cierre de forma asíncrona; sin este
+    // filtro pisaría con `disconnected` el estado del cliente que lo reemplazó.
+    let active = true
     const client = createRealtimeClient(tech, {
-      onStatus: (status) => dispatch(statusChanged(status)),
-      onUpdate: (payload) =>
-        dispatch(addRemotePointToCurrent({ ...room, point: payload.point })),
+      onStatus: (status) => {
+        if (!active) return
+        console.info(`[rt:${tech}] ${status.state} · blueprints.${author}.${name}`, status.detail ?? '')
+        dispatch(statusChanged(status))
+      },
+      onUpdate: (payload) => {
+        if (!active || payload.clientId === CLIENT_ID) return
+        dispatch(
+          addRemotePointToCurrent({ ...room, point: payload.point, clientId: payload.clientId }),
+        )
+      },
     })
 
     if (!client) return undefined
@@ -31,6 +42,7 @@ export default function useRealtime({ author, name }) {
     client.connect(room)
 
     return () => {
+      active = false
       client.disconnect()
       clientRef.current = null
       dispatch(realtimeDisconnected())
@@ -41,6 +53,6 @@ export default function useRealtime({ author, name }) {
     tech,
     enabled,
     broadcast: (point) =>
-      clientRef.current?.sendPoint({ author, name, point }) ?? false,
+      clientRef.current?.sendPoint({ author, name, point, clientId: CLIENT_ID }) ?? false,
   }
 }

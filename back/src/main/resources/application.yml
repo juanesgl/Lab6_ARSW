@@ -27,6 +27,12 @@ spring:
         jwt:
           jwk-set-uri: https://auth.example.com/.well-known/jwks.json
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+
 springdoc:
   swagger-ui:
     path: /swagger-ui.html

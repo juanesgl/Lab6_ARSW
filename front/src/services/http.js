@@ -3,9 +3,16 @@ import axios from 'axios'
 export const TOKEN_KEY = 'token'
 export const UNAUTHORIZED_EVENT = 'auth:unauthorized'
 
-// En desarrollo '/api' pasa por el proxy de Vite (vite.config.js), evitando problemas de CORS.
+// VITE_API_BASE_URL ya incluye /api; VITE_API_BASE (nombre del enunciado de la P4) es solo el host.
+// Sin ninguna, '/api' pasa por el proxy de Vite (vite.config.js), evitando problemas de CORS.
+export function resolveBaseURL(env) {
+  if (env.VITE_API_BASE_URL) return env.VITE_API_BASE_URL
+  if (env.VITE_API_BASE) return `${env.VITE_API_BASE.replace(/\/+$/, '')}/api`
+  return '/api'
+}
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || '/api',
+  baseURL: resolveBaseURL(import.meta.env),
   timeout: 8000,
 })
 

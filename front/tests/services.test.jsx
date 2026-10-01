@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import apimock from '../src/services/apimock.js'
 import apiClient from '../src/services/apiClient.js'
-import api, { toErrorMessage } from '../src/services/http.js'
+import api, { resolveBaseURL, toErrorMessage } from '../src/services/http.js'
 
 describe('apimock y apiClient', () => {
   beforeEach(() => apimock.reset())
@@ -45,6 +45,24 @@ describe('apimock y apiClient', () => {
     expect(put).toHaveBeenNthCalledWith(1, '/blueprints/john/my%20house/points', { x: 1, y: 2 })
   })
 
+  it('apiClient.update reemplaza el plano con un único PUT', async () => {
+    const put = vi.spyOn(api, 'put').mockResolvedValue({ status: 204 })
+    const points = [
+      { x: 1, y: 2 },
+      { x: 3, y: 4 },
+    ]
+    await apiClient.update('john', 'my house', points)
+    expect(put).toHaveBeenCalledTimes(1)
+    expect(put).toHaveBeenCalledWith('/blueprints/john/my%20house', points)
+  })
+
+  it('apimock.update es idempotente: guardar dos veces no duplica puntos', async () => {
+    const points = [{ x: 1, y: 1 }]
+    await apimock.update('john', 'house', points)
+    await apimock.update('john', 'house', points)
+    expect((await apimock.getByAuthorAndName('john', 'house')).points).toEqual(points)
+  })
+
   it('apiClient.getByAuthor consulta /blueprints/{author}', async () => {
     const get = vi.spyOn(api, 'get').mockResolvedValue({ data: [] })
     await apiClient.getByAuthor('john')
@@ -77,6 +95,14 @@ describe('blueprintsService', () => {
 
 describe('http (interceptores JWT)', () => {
   beforeEach(() => localStorage.clear())
+
+  it('resuelve la URL base con cualquiera de las dos variables de entorno', () => {
+    expect(resolveBaseURL({})).toBe('/api')
+    expect(resolveBaseURL({ VITE_API_BASE: 'http://localhost:8080/' })).toBe(
+      'http://localhost:8080/api',
+    )
+    expect(resolveBaseURL({ VITE_API_BASE_URL: '/api', VITE_API_BASE: 'http://x' })).toBe('/api')
+  })
 
   it('agrega Authorization: Bearer <token> si hay token', () => {
     localStorage.setItem('token', 'abc')

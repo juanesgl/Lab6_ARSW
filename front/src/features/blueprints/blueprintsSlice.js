@@ -39,12 +39,14 @@ export const createBlueprint = createAsyncThunk(
   withMessage((blueprint) => blueprintsService.create(blueprint)),
 )
 
-// Guarda los puntos agregados en el canvas. Optimista: la tabla se actualiza en `pending`
+// Guarda el plano completo (PUT de reemplazo). Optimista: la tabla se actualiza en `pending`
 // y se revierte en `rejected` usando `previousPoints`.
+// Es un reemplazo y no un append porque en tiempo real varias pestañas tienen los mismos
+// puntos sin guardar: si cada una los agregara, quedarían duplicados en la base de datos.
 export const saveBlueprint = createAsyncThunk(
   'blueprints/saveBlueprint',
-  withMessage(({ author, name, newPoints }) =>
-    blueprintsService.addPoints(author, name, newPoints),
+  withMessage(({ author, name, previousPoints, newPoints }) =>
+    blueprintsService.update(author, name, [...previousPoints, ...newPoints]),
   ),
 )
 
@@ -83,7 +85,8 @@ const findIndex = (items = [], name) => items.findIndex((bp) => bp.name === name
 
 const samePoint = (a, b) => a.x === b.x && a.y === b.y
 
-// El eco RT del propio punto vuelve por el tópico; sin este filtro se duplica en el trazo.
+// Respaldo para servidores RT que no reenvían `clientId`: ahí el eco del punto propio solo se
+// puede reconocer por coordenadas; sin este filtro se duplicaría en el trazo.
 const wasAlreadyDrawn = (points, point) => points.some((p) => samePoint(p, point))
 
 const slice = createSlice({
@@ -96,9 +99,11 @@ const slice = createSlice({
     addRemotePointToCurrent(state, action) {
       const bp = state.current
       if (!bp) return
-      const { author, name, point } = action.payload
+      const { author, name, point, clientId } = action.payload
       if (bp.author !== author || bp.name !== name) return
-      if (wasAlreadyDrawn(bp.points, point)) return
+      // Con `clientId` el eco propio ya se descartó en useRealtime y el punto es de otra pestaña,
+      // aunque repita coordenadas (p. ej. al cerrar una figura).
+      if (!clientId && wasAlreadyDrawn(bp.points, point)) return
       bp.points.push(point)
     },
     remotePointsCleared(state) {

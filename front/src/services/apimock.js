@@ -114,6 +114,13 @@ const apimock = {
     data.push(clone(blueprint))
     return clone(blueprint)
   },
+  update: async (author, name, points) => {
+    await delay()
+    const bp = find(author, name)
+    if (!bp) throw new Error(`No existe el plano "${name}" de "${author}".`)
+    bp.points = clone(points)
+    return { author, name, points: clone(points) }
+  },
   addPoints: async (author, name, points) => {
     await delay()
     const bp = find(author, name)

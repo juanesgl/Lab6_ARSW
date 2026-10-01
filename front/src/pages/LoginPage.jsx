@@ -61,9 +61,8 @@ export default function LoginPage() {
       </button>
       <p className="muted" style={{ marginBottom: 0 }}>
         Usuarios de prueba{USE_MOCK ? ' (modo mock)' : ' del backend'}:{' '}
-        <code>student / student123</code>
-        {!USE_MOCK && ' (solo lectura)'}, <code>assistant / assistant123</code>
-        {!USE_MOCK && ' (lectura y escritura)'}
+        <code>student / student123</code>, <code>assistant / assistant123</code>
+        {!USE_MOCK && ' (ambos con lectura y escritura)'}
       </p>
     </form>
   )

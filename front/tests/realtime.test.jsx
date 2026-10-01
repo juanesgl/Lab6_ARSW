@@ -7,7 +7,12 @@ import reducer, {
   statusChanged,
   techSelected,
 } from '../src/features/realtime/realtimeSlice.js'
-import { RT_TECHNOLOGIES, createRealtimeClient } from '../src/features/realtime/realtimeClients.js'
+import {
+  CLIENT_ID,
+  RT_TECHNOLOGIES,
+  createRealtimeClient,
+} from '../src/features/realtime/realtimeClients.js'
+import { toBrokerURL } from '../src/services/stompService.js'
 import blueprintsReducer, {
   addPointToCurrent,
   addRemotePointToCurrent,
@@ -64,6 +69,39 @@ describe('realtime clients registry', () => {
   it('should return null client when tech is none', () => {
     expect(createRealtimeClient('none', {})).toBeNull()
   })
+
+  it('should build clients with the common transport interface', () => {
+    for (const tech of ['stomp', 'socketio']) {
+      const client = createRealtimeClient(tech, {})
+      for (const method of ['connect', 'sendPoint', 'disconnect']) {
+        expect(typeof client[method]).toBe('function')
+      }
+      // Sin conexión no se envía nada (y no lanza)
+      expect(client.sendPoint({ author: 'a', name: 'b', point: { x: 1, y: 1 } })).toBe(false)
+    }
+  })
+
+  it('should identify this tab with a stable client id', () => {
+    expect(CLIENT_ID).toEqual(expect.any(String))
+    expect(CLIENT_ID.length).toBeGreaterThan(8)
+  })
+})
+
+describe('STOMP broker URL', () => {
+  it('should append the endpoint and switch http to ws', () => {
+    expect(toBrokerURL('http://localhost:8080')).toBe('ws://localhost:8080/ws-blueprints')
+    expect(toBrokerURL('https://api.example.com/')).toBe('wss://api.example.com/ws-blueprints')
+  })
+
+  it('should keep a ws url that already includes the endpoint', () => {
+    expect(toBrokerURL('ws://localhost:8080/ws-blueprints')).toBe(
+      'ws://localhost:8080/ws-blueprints',
+    )
+  })
+
+  it('should fall back to the local backend when unset', () => {
+    expect(toBrokerURL(undefined)).toBe('ws://localhost:8080/ws-blueprints')
+  })
 })
 
 describe('remote points in blueprints slice', () => {
@@ -93,6 +131,20 @@ describe('remote points in blueprints slice', () => {
       addRemotePointToCurrent({ author: 'john', name: 'plano-1', point: { x: 10, y: 20 } }),
     )
     expect(state.current.points).toHaveLength(1)
+  })
+
+  it('should keep a point from another tab even if its coordinates repeat', () => {
+    const drawn = blueprintsReducer(withBlueprint(), addPointToCurrent({ x: 10, y: 20 }))
+    const state = blueprintsReducer(
+      drawn,
+      addRemotePointToCurrent({
+        author: 'john',
+        name: 'plano-1',
+        point: { x: 10, y: 20 },
+        clientId: 'otra-pestaña',
+      }),
+    )
+    expect(state.current.points).toHaveLength(2)
   })
 
   it('should keep distinct points even when they share one axis', () => {

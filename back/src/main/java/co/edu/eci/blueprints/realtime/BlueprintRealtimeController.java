@@ -46,7 +46,8 @@ public class BlueprintRealtimeController {
                     "point out of canvas bounds: 0.." + CANVAS_WIDTH + " x 0.." + CANVAS_HEIGHT);
         }
 
-        messaging.convertAndSend(topicFor(author, name), new DrawEvent(author, name, point));
+        messaging.convertAndSend(topicFor(author, name),
+                new DrawEvent(author, name, point, sanitizeClientId(event.clientId())));
         log.info("draw point ({},{}) on blueprint {}/{}", point.getX(), point.getY(), author, name);
     }
 
@@ -62,6 +63,11 @@ public class BlueprintRealtimeController {
         return trimmed.matches("[A-Za-z0-9._\\- ]{1,64}") ? trimmed : "";
     }
 
-    public record DrawEvent(String author, String name, Point point) {
+    // Se reenvía tal cual para que el emisor descarte su eco; si no es válido se omite.
+    private String sanitizeClientId(String value) {
+        return value != null && value.matches("[A-Za-z0-9-]{1,64}") ? value : null;
+    }
+
+    public record DrawEvent(String author, String name, Point point, String clientId) {
     }
 }

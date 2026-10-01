@@ -1,7 +1,6 @@
-# Levanta el frontend (este repositorio) junto al backend (repositorio independiente del Lab P2)
-# y su base de datos PostgreSQL.
-# El backend se construye directamente desde GitHub; para usar una copia local:
-#   BACKEND_CONTEXT=../Lab_P2_BluePrints_Java21_API_Security_JWT docker compose up --build
+# Levanta el frontend junto al backend (../back) y su base de datos PostgreSQL.
+# El navegador habla STOMP directo con el backend en localhost:8080 (puerto publicado abajo).
+# El servidor Socket.IO (../back-rt-socketio) no está en este compose: se levanta con `npm start`.
 services:
   web:
     build:
@@ -16,7 +15,7 @@ services:
       - backend
 
   backend:
-    build: ${BACKEND_CONTEXT:-https://github.com/juanesgl/Lab_P2_BluePrints_Java21_API_Security_JWT.git#main}
+    build: ${BACKEND_CONTEXT:-../back}
     ports:
       - '8080:8080'
     environment:

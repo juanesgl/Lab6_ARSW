@@ -18,7 +18,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 @RestController
 @RequestMapping("/api/blueprints")
@@ -29,12 +28,18 @@ public class BlueprintsAPIController {
 
     public BlueprintsAPIController(BlueprintsServices services) { this.services = services; }
 
-    // GET /blueprints
-    @Operation(summary = "Obtener todos los planos", description = "Retorna una lista con la totalidad de los planos registrados en el sistema.")
-    @ApiResponse(responseCode = "200", description = "Lista de planos obtenida exitosamente")
+    // GET /api/blueprints  y  GET /api/blueprints?author={author}
+    @Operation(summary = "Obtener todos los planos", description = "Retorna una lista con la totalidad de los planos registrados en el sistema. Con el parámetro opcional 'author' retorna solo los de ese autor.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Lista de planos obtenida exitosamente"),
+            @ApiResponse(responseCode = "404", description = "El autor indicado no tiene planos registrados")
+    })
     @PreAuthorize("hasAuthority('SCOPE_blueprints.read')")
     @GetMapping
-    public ResponseEntity<Set<Blueprint>> getAll() {
+    public ResponseEntity<?> getAll(@RequestParam(required = false) String author) {
+        if (author != null && !author.isBlank()) {
+            return byAuthor(author.trim());
+        }
         return ResponseEntity.ok(services.getAllBlueprints());
     }
 

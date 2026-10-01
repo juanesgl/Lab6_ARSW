@@ -23,6 +23,7 @@ import {
 } from '../features/blueprints/selectors.js'
 import { selectIsAuthenticated } from '../features/auth/authSlice.js'
 import {
+  selectRealtimeError,
   selectRealtimeStatus,
   selectRealtimeTech,
   techSelected,
@@ -53,6 +54,7 @@ export default function BlueprintsPage() {
   const deleteReq = useSelector(selectRequest('deleteBlueprint'))
   const rtTech = useSelector(selectRealtimeTech)
   const rtStatus = useSelector(selectRealtimeStatus)
+  const rtError = useSelector(selectRealtimeError)
 
   const [authorInput, setAuthorInput] = useState(location.state?.author ?? selectedAuthor)
   const [lastOpened, setLastOpened] = useState(null)
@@ -301,15 +303,23 @@ export default function BlueprintsPage() {
                 </option>
               ))}
             </select>
-            <span className={`badge ${rtStatus === 'connected' ? 'ok' : 'warn'}`}>
+            <span
+              data-testid="rt-status"
+              className={`badge ${rtEnabled && rtStatus === 'connected' ? 'ok' : 'warn'}`}
+            >
               {rtEnabled ? rtStatus : 'inactivo'}
             </span>
           </div>
+          {rtEnabled && rtError && (
+            <p className="text-error" role="alert">
+              Tiempo real: {rtError}
+            </p>
+          )}
           <p className="muted" style={{ marginBottom: 0 }}>
             {rtTech === 'none'
               ? 'Sin tiempo real: los puntos solo se guardan en esta pestaña.'
               : current
-                ? `Colaborando en el tópico blueprints.${current.author}.${current.name}`
+                ? `Colaborando en ${rtTech === 'stomp' ? 'el tópico /topic/' : 'la sala '}blueprints.${current.author}.${current.name}`
                 : 'Abre un plano para empezar a colaborar.'}
           </p>
         </div>

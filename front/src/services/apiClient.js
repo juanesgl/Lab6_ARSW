@@ -22,6 +22,11 @@ const apiClient = {
     await api.post('/blueprints', blueprint)
     return blueprint
   },
+  // PUT /blueprints/{author}/{name}: reemplaza todos los puntos del plano
+  update: async (author, name, points) => {
+    await api.put(path(author, name), points)
+    return { author, name, points }
+  },
   // El backend expone PUT /blueprints/{author}/{name}/points que agrega UN punto por petición
   addPoints: async (author, name, points) => {
     for (const p of points) {
