@@ -7,6 +7,7 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -56,5 +57,24 @@ public class PostgresBlueprintPersistence implements BlueprintPersistence {
         Blueprint bp = getBlueprint(author, name);
         bp.addPoint(new Point(x, y));
         repository.save(bp);
+    }
+
+    @Override
+    @Transactional
+    public void updateBlueprint(String author, String name, List<Point> points)
+            throws BlueprintNotFoundException {
+        Blueprint bp = getBlueprint(author, name);
+        bp.setPoints(new ArrayList<>(points != null ? points : List.of()));
+        repository.save(bp);
+    }
+
+    @Override
+    @Transactional
+    public void deleteBlueprint(String author, String name) throws BlueprintNotFoundException {
+        BlueprintPK id = new BlueprintPK(author, name);
+        if (!repository.existsById(id)) {
+            throw new BlueprintNotFoundException("Blueprint not found: " + author + "/" + name);
+        }
+        repository.deleteById(id);
     }
 }

@@ -2,11 +2,13 @@ package co.edu.eci.blueprints.services;
 
 import co.edu.eci.blueprints.filters.BlueprintsFilter;
 import co.edu.eci.blueprints.model.Blueprint;
+import co.edu.eci.blueprints.model.Point;
 import co.edu.eci.blueprints.persistence.BlueprintNotFoundException;
 import co.edu.eci.blueprints.persistence.BlueprintPersistence;
 import co.edu.eci.blueprints.persistence.BlueprintPersistenceException;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -43,5 +45,14 @@ public class BlueprintsServices {
 
     public void addPoint(String author, String name, int x, int y) throws BlueprintNotFoundException {
         persistence.addPoint(author, name, x, y);
+    }
+
+    public void updateBlueprint(String author, String name, List<Point> points)
+            throws BlueprintNotFoundException {
+        persistence.updateBlueprint(author, name, points);
+    }
+
+    public void deleteBlueprint(String author, String name) throws BlueprintNotFoundException {
+        persistence.deleteBlueprint(author, name);
     }
 }
