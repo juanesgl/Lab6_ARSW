@@ -18,8 +18,8 @@ public class InMemoryUserService {
         );
 
         this.userScopes = Map.of(
-            "student", "blueprints.read",
-            "assistant", "blueprints.read"
+            "student", "blueprints.read blueprints.write",
+            "assistant", "blueprints.read blueprints.write"
         );
     }
 
