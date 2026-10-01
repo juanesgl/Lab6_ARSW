@@ -35,3 +35,5 @@ blueprints:
   security:
     issuer: "https://decsis-eci/blueprints"
     token-ttl-seconds: 3600
+  realtime:
+    allowed-origins: "http://localhost:5173"
