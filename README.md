@@ -37,8 +37,7 @@ pestañas que tienen abierto el mismo plano.
 8. [Análisis: Socket.IO vs STOMP](#8-análisis-socketio-vs-stomp)
 9. [Pruebas](#9-pruebas)
 10. [Evidencias](#10-evidencias)
-11. [Limitaciones conocidas](#11-limitaciones-conocidas)
-12. [Documentos relacionados](#12-documentos-relacionados)
+11. [Documentos relacionados](#11-documentos-relacionados)
 
 ---
 
@@ -48,16 +47,16 @@ pestañas que tienen abierto el mismo plano.
 
 | Lo que pide el enunciado | Cómo se resolvió | Dónde verlo |
 |---|---|---|
-| **CRUD (REST):** los cinco endpoints `GET ?author=`, `GET /:author/:name`, `POST`, `PUT`, `DELETE` | Implementados en `BlueprintsAPIController` con las mismas rutas, protegidos con JWT | [§4](#4-api-rest) |
-| **Tiempo real, elegir uno:** Socket.IO (`join-room`, `draw-event` → `blueprint-update`) **o** STOMP (`@MessageMapping("/draw")` → `/topic/blueprints.{author}.{name}`) | **Se hicieron los dos**, con los eventos, destinos y nombres de sala del enunciado | [§5.3](#53-stomp-spring-websocket) y [§5.4](#54-socketio-node) |
-| **UI:** lienzo con dibujo por clic (incremental) | `BlueprintCanvas.jsx` pinta los puntos del plano actual desde Redux; cada clic agrega un punto y repinta | [§10](#10-evidencias) |
-| **UI:** panel del autor con tabla de planos y **total de puntos** (`reduce`) | Selector memoizado `selectTotalPoints`: un `reduce` sobre los planos del autor | [§4](#4-api-rest) |
-| **UI:** barra de acciones Create / Save-Update / Delete | Thunks de Redux Toolkit sobre Axios; guardar es un `PUT` de reemplazo | [§10](#10-evidencias), CRUD |
-| **UI:** selector de tecnología **None / Socket.IO / STOMP** | Selector en la tarjeta *Tecnología de tiempo real*; cambia de transporte en caliente | [§5.2](#52-selector-de-tecnología) |
-| **Convención:** plano como canal/sala `blueprints.{author}.{name}` | Es el nombre del tópico STOMP y de la sala Socket.IO | [§5.1](#51-contrato) |
-| **Variables de entorno:** `VITE_API_BASE`, `VITE_IO_BASE`, `VITE_STOMP_BASE` | Las tres están soportadas con los valores del enunciado | [§3](#3-puesta-en-marcha) |
-| **DX/Calidad:** código limpio, manejo de errores, README de equipo | Interfaz común de transporte, badge de estado y mensajes de error, este documento | [§5.5](#55-diseño-del-cliente), [§7](#7-observabilidad-y-estabilidad) |
-| **Seguridad (mínimos):** validación de payloads y restricción de orígenes; JWT opcional | Validación en ambos servidores (**zod** en Node), orígenes restringidos y JWT en todo el CRUD | [§6](#6-seguridad) |
+| **CRUD (REST):** los cinco endpoints `GET ?author=`, `GET /:author/:name`, `POST`, `PUT`, `DELETE` | Implementados en `BlueprintsAPIController` con las mismas rutas, protegidos con JWT | [API REST](#4-api-rest) |
+| **Tiempo real, elegir uno:** Socket.IO (`join-room`, `draw-event` → `blueprint-update`) **o** STOMP (`@MessageMapping("/draw")` → `/topic/blueprints.{author}.{name}`) | **Se hicieron los dos**, con los eventos, destinos y nombres de sala del enunciado | [STOMP](#53-stomp-spring-websocket) y [Socket.IO](#54-socketio-node) |
+| **UI:** lienzo con dibujo por clic (incremental) | `BlueprintCanvas.jsx` pinta los puntos del plano actual desde Redux; cada clic agrega un punto y repinta | [Evidencias](#10-evidencias) |
+| **UI:** panel del autor con tabla de planos y **total de puntos** (`reduce`) | Selector memoizado `selectTotalPoints`: un `reduce` sobre los planos del autor | [API REST](#4-api-rest) |
+| **UI:** barra de acciones Create / Save-Update / Delete | Thunks de Redux Toolkit sobre Axios; guardar es un `PUT` de reemplazo | [Evidencias](#10-evidencias) (CRUD) |
+| **UI:** selector de tecnología **None / Socket.IO / STOMP** | Selector en la tarjeta *Tecnología de tiempo real*; cambia de transporte en caliente | [Selector de tecnología](#52-selector-de-tecnología) |
+| **Convención:** plano como canal/sala `blueprints.{author}.{name}` | Es el nombre del tópico STOMP y de la sala Socket.IO | [Contrato](#51-contrato) |
+| **Variables de entorno:** `VITE_API_BASE`, `VITE_IO_BASE`, `VITE_STOMP_BASE` | Las tres están soportadas con los valores del enunciado | [Puesta en marcha](#3-puesta-en-marcha) |
+| **DX/Calidad:** código limpio, manejo de errores, README de equipo | Interfaz común de transporte, badge de estado y mensajes de error, este documento | [Diseño del cliente](#55-diseño-del-cliente), [Observabilidad](#7-observabilidad-y-estabilidad) |
+| **Seguridad (mínimos):** validación de payloads y restricción de orígenes; JWT opcional | Validación en ambos servidores (**zod** en Node), orígenes restringidos y JWT en todo el CRUD | [Seguridad](#6-seguridad) |
 
 ### Entregables
 
@@ -65,17 +64,17 @@ pestañas que tienen abierto el mismo plano.
 |---|---|
 | Código del front integrado con CRUD y tiempo real | Carpeta `front/`, con los dos transportes |
 | Video corto mostrando colaboración en vivo y operaciones CRUD | <https://youtu.be/-SgkN_35QZ0> |
-| README del equipo: setup, endpoints usados, decisiones (rooms/tópicos) | [§3](#3-puesta-en-marcha), [§4](#4-api-rest) y [§5.6](#56-decisiones-de-diseño) |
-| Comparativa Socket.IO vs STOMP (opcional) | [§8](#8-análisis-socketio-vs-stomp) |
+| README del equipo: setup, endpoints usados, decisiones (rooms/tópicos) | [Puesta en marcha](#3-puesta-en-marcha), [API REST](#4-api-rest) y [Decisiones de diseño](#56-decisiones-de-diseño) |
+| Comparativa Socket.IO vs STOMP (opcional) | [Análisis](#8-análisis-socketio-vs-stomp) |
 
 ### Rúbrica
 
 | Criterio | Qué pide | Dónde se cubre |
 |---|---|---|
-| **Funcionalidad (40 %)** | Tiempo real estable (join/broadcast), aislamiento por plano, CRUD operativo | [§5](#5-tiempo-real), [§10](#10-evidencias) y [video](https://youtu.be/-SgkN_35QZ0) |
-| **Calidad técnica (30 %)** | Estructura limpia, manejo de errores, documentación clara | [§2](#2-arquitectura), [§5.5](#55-diseño-del-cliente), [§9](#9-pruebas) |
-| **Observabilidad/DX (15 %)** | Logs útiles (conexión, eventos), health checks básicos | [§7](#7-observabilidad-y-estabilidad) |
-| **Análisis (15 %)** | Hallazgos de latencia y reconexión; pros y contras Socket.IO vs STOMP | [§8](#8-análisis-socketio-vs-stomp) y reconexión en [§7](#7-observabilidad-y-estabilidad) |
+| **Funcionalidad (40 %)** | Tiempo real estable (join/broadcast), aislamiento por plano, CRUD operativo | [Tiempo real](#5-tiempo-real), [Evidencias](#10-evidencias) y [video](https://youtu.be/-SgkN_35QZ0) |
+| **Calidad técnica (30 %)** | Estructura limpia, manejo de errores, documentación clara | [Arquitectura](#2-arquitectura), [Diseño del cliente](#55-diseño-del-cliente), [Pruebas](#9-pruebas) |
+| **Observabilidad/DX (15 %)** | Logs útiles (conexión, eventos), health checks básicos | [Observabilidad](#7-observabilidad-y-estabilidad) |
+| **Análisis (15 %)** | Hallazgos de latencia y reconexión; pros y contras Socket.IO vs STOMP | [Análisis](#8-análisis-socketio-vs-stomp) y reconexión en [Observabilidad](#7-observabilidad-y-estabilidad) |
 
 ### Casos de prueba
 
@@ -600,7 +599,7 @@ remotos entran al mismo arreglo de Redux que los locales.
   el front cierra la sesión). Los puntos dibujados mientras el servidor estuvo caído no se
   retransmiten: quedan locales hasta guardar.
 
-Las capturas de los logs y de los health checks están en [§10](#10-evidencias).
+Las capturas de los logs y de los health checks están en la sección [Evidencias](#10-evidencias).
 
 ---
 
@@ -722,21 +721,7 @@ El API rechaza con `401` una petición sin token.
 
 ---
 
-## 11. Limitaciones conocidas
-
-1. Los canales de tiempo real no validan JWT (ver [§6](#6-seguridad)).
-2. Los puntos dibujados no se persisten hasta pulsar *Guardar Cambios*; quien abre el plano después
-   solo ve lo guardado más lo que se dibuje desde ese momento.
-3. Sin resolución de conflictos: el orden de los puntos concurrentes lo fija la llegada a cada
-   pestaña y el `PUT` de reemplazo es *last-write-wins*.
-4. *Descartar* solo afecta a la pestaña local.
-5. La tabla y el total se actualizan en la pestaña que guarda; las demás los refrescan al volver a
-   pulsar **Get blueprints**.
-6. El `docker-compose.yml` del front no incluye el servidor Socket.IO.
-
----
-
-## 12. Documentos relacionados
+## 11. Documentos relacionados
 
 - [COMO_EJECUTAR.md](./COMO_EJECUTAR.md) — guía operativa para Linux y Windows, y troubleshooting.
 - [back-rt-socketio/README.md](./back-rt-socketio/README.md) — contrato y validación del servidor Socket.IO.
